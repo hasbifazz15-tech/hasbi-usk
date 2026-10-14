@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard</title>
+    <title>Dashboard Admin</title>
 
     <style>
         * {
@@ -13,74 +13,88 @@
         body {
             margin: 0;
             font-family: Arial, sans-serif;
-            background: #f5f6f8;
-            color: #111827;
+            background: #fff;
+            color: #111;
         }
 
-        .container {
-            width: 90%;
-            max-width: 1100px;
-            margin: 40px auto;
-        }
-
-        .header {
+        header {
+            padding: 20px 7%;
+            border-bottom: 1px solid #ddd;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 30px;
         }
 
-        h1 {
-            margin: 0;
+        .logo {
+            font-size: 21px;
+            font-weight: bold;
+        }
+
+        button, .btn {
+            padding: 10px 16px;
+            border: 1px solid #111;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        button {
+            background: white;
+            color: #111;
+        }
+
+        main {
+            width: 86%;
+            max-width: 1000px;
+            margin: 40px auto;
         }
 
         .subtitle {
-            color: #6b7280;
-            margin-top: 5px;
+            color: #666;
+            margin-bottom: 30px;
         }
 
-        .logout {
-            background: #dc2626;
-            color: white;
-            border: 0;
-            padding: 10px 16px;
-            border-radius: 7px;
-            cursor: pointer;
-        }
-
-        .cards {
+        .stats, .menus {
             display: grid;
             grid-template-columns: repeat(2, 1fr);
-            gap: 20px;
+            gap: 18px;
+            margin-bottom: 30px;
         }
 
         .card {
-            background: white;
-            padding: 25px;
-            border-radius: 10px;
-            box-shadow: 0 4px 15px rgba(0,0,0,.05);
+            padding: 24px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
         }
 
-        .card h2 {
+        .card h2, .card h3 {
             margin-top: 0;
         }
 
+        .number {
+            font-size: 28px;
+            font-weight: bold;
+        }
+
         .card p {
-            color: #6b7280;
+            color: #666;
+            line-height: 1.6;
         }
 
         .btn {
             display: inline-block;
-            margin-top: 10px;
-            padding: 10px 16px;
-            background: #111827;
+            background: #111;
             color: white;
             text-decoration: none;
-            border-radius: 7px;
+            margin-top: 8px;
         }
 
         @media (max-width: 600px) {
-            .cards {
+            main {
+                width: 90%;
+            }
+
+            .stats, .menus {
                 grid-template-columns: 1fr;
             }
         }
@@ -89,57 +103,66 @@
 
 <body>
 
-<div class="container">
+<header>
+    <div class="logo">HASBI USK | ADMIN</div>
 
-    <div class="header">
-        <div>
-            <h1>Dashboard</h1>
+    <form method="POST" action="{{ route('logout') }}">
+        @csrf
+        <button type="submit">Logout</button>
+    </form>
+</header>
 
-            <div class="subtitle">
-                Selamat datang, {{ auth()->user()->name }}
-            </div>
+<main>
+    <h1>Dashboard Admin</h1>
+
+    <p class="subtitle">
+        Selamat datang, {{ auth()->user()->name }}.
+    </p>
+
+    <div class="stats">
+        <div class="card">
+            <p>Total Peserta</p>
+            <div class="number">{{ $totalPeserta }}</div>
         </div>
 
-        <form method="POST" action="{{ route('logout') }}">
-            @csrf
+        <div class="card">
+            <p>Total Skema</p>
+            <div class="number">{{ $totalSkema }}</div>
+        </div>
 
-            <button class="logout" type="submit">
-                Logout
-            </button>
-        </form>
+        <div class="card">
+            <p>Peserta Lulus</p>
+            <div class="number">{{ $pesertaLulus }}</div>
+        </div>
+
+        <div class="card">
+            <p>Peserta Dalam Proses</p>
+            <div class="number">{{ $pesertaProses }}</div>
+        </div>
     </div>
 
+    <h2>Menu Admin</h2>
 
-    <div class="cards">
-
+    <div class="menus">
         <div class="card">
-            <h2>Skema Sertifikasi</h2>
-
-            <p>
-                Kelola data skema sertifikasi yang tersedia.
-            </p>
-
-            <a href="{{ route('skema.index') }}" class="btn">
-                Kelola Skema
-            </a>
-        </div>
-
-
-        <div class="card">
-            <h2>Data Peserta</h2>
-
-            <p>
-                Kelola data peserta sertifikasi.
-            </p>
+            <h3>Data Peserta</h3>
+            <p>Tambah, edit, lihat, dan hapus data peserta sertifikasi.</p>
 
             <a href="{{ route('peserta.index') }}" class="btn">
                 Kelola Peserta
             </a>
         </div>
 
-    </div>
+        <div class="card">
+            <h3>Skema Sertifikasi</h3>
+            <p>Kelola informasi skema sertifikasi yang tersedia.</p>
 
-</div>
+            <a href="{{ route('skema.index') }}" class="btn">
+                Kelola Skema
+            </a>
+        </div>
+    </div>
+</main>
 
 </body>
 </html>

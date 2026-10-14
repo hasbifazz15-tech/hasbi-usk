@@ -9,13 +9,13 @@ use Illuminate\Support\Facades\Hash;
 
 class AuthController extends Controller
 {
-    // Menampilkan halaman login
+    // Halaman Login
     public function showLogin()
     {
         return view('auth.login');
     }
 
-    // Proses login
+    // Proses Login
     public function login(Request $request)
     {
         $credentials = $request->validate([
@@ -35,7 +35,6 @@ class AuthController extends Controller
 
         $user = Auth::user();
 
-        // Arahkan sesuai role
         if ($user->role === 'admin') {
             return redirect()->route('dashboard');
         }
@@ -44,9 +43,7 @@ class AuthController extends Controller
             return redirect()->route('user.dashboard');
         }
 
-        // Logout jika role tidak dikenal
         Auth::logout();
-
         $request->session()->invalidate();
         $request->session()->regenerateToken();
 
@@ -56,31 +53,22 @@ class AuthController extends Controller
             ]);
     }
 
-    // Menampilkan halaman register
+    // Halaman Register
     public function showRegister()
     {
         return view('auth.register');
     }
 
-    // Proses register akun baru
+    // Proses Register
     public function register(Request $request)
     {
         $data = $request->validate([
             'name' => ['required', 'string', 'max:255'],
-            'email' => [
-                'required',
-                'email',
-                'max:255',
-                'unique:users,email',
-            ],
-            'password' => [
-                'required',
-                'string',
-                'min:8',
-                'confirmed',
-            ],
+            'email' => ['required', 'email', 'max:255', 'unique:users,email'],
+            'password' => ['required', 'string', 'min:8', 'confirmed'],
         ]);
 
+        // Semua akun yang mendaftar otomatis menjadi user
         $user = new User();
         $user->name = $data['name'];
         $user->email = $data['email'];
@@ -95,7 +83,7 @@ class AuthController extends Controller
         return redirect()->route('user.dashboard');
     }
 
-    // Proses logout
+    // Proses Logout
     public function logout(Request $request)
     {
         Auth::logout();
@@ -103,6 +91,6 @@ class AuthController extends Controller
         $request->session()->invalidate();
         $request->session()->regenerateToken();
 
-        return redirect()->route('login');
+        return redirect()->route('welcome');
     }
 }
