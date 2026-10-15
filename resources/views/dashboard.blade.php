@@ -4,165 +4,97 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dashboard Admin</title>
-
     <style>
-        * {
-            box-sizing: border-box;
-        }
-
+        * { box-sizing: border-box; }
         body {
             margin: 0;
             font-family: Arial, sans-serif;
-            background: #fff;
+            background: #f5f5f5;
             color: #111;
         }
-
         header {
-            padding: 20px 7%;
+            padding: 18px 7%;
+            background: white;
             border-bottom: 1px solid #ddd;
             display: flex;
             justify-content: space-between;
             align-items: center;
         }
-
-        .logo {
-            font-size: 21px;
-            font-weight: bold;
-        }
-
-        button, .btn {
-            padding: 10px 16px;
-            border: 1px solid #111;
-            border-radius: 5px;
-            cursor: pointer;
-            font-size: 14px;
-        }
-
-        button {
-            background: white;
-            color: #111;
-        }
-
         main {
             width: 86%;
-            max-width: 1000px;
-            margin: 40px auto;
+            max-width: 1100px;
+            margin: 35px auto;
         }
-
-        .subtitle {
-            color: #666;
-            margin-bottom: 30px;
-        }
-
-        .stats, .menus {
+        .menu {
             display: grid;
-            grid-template-columns: repeat(2, 1fr);
+            grid-template-columns: repeat(2, minmax(0, 1fr));
             gap: 18px;
-            margin-bottom: 30px;
         }
-
-        .card {
-            padding: 24px;
+        .menu-card {
+            background: white;
             border: 1px solid #ddd;
             border-radius: 8px;
+            padding: 24px;
         }
-
-        .card h2, .card h3 {
-            margin-top: 0;
-        }
-
-        .number {
-            font-size: 28px;
-            font-weight: bold;
-        }
-
-        .card p {
-            color: #666;
-            line-height: 1.6;
-        }
-
+        .menu-card p { color: #666; line-height: 1.6; }
         .btn {
             display: inline-block;
+            padding: 10px 15px;
+            margin-top: 10px;
+            border: 1px solid #111;
+            border-radius: 5px;
             background: #111;
             color: white;
             text-decoration: none;
-            margin-top: 8px;
+            cursor: pointer;
         }
-
-        @media (max-width: 600px) {
-            main {
-                width: 90%;
-            }
-
-            .stats, .menus {
-                grid-template-columns: 1fr;
-            }
+        .btn-outline { background: white; color: #111; }
+        @media (max-width: 650px) {
+            .menu { grid-template-columns: 1fr; }
+            main { width: 92%; }
+            header { padding: 16px 4%; }
         }
     </style>
 </head>
-
 <body>
-
 <header>
-    <div class="logo">HASBI USK | ADMIN</div>
-
-    <form method="POST" action="{{ route('logout') }}">
+    <strong>HASBI USK — ADMIN</strong>
+    <form action="{{ route('logout') }}" method="POST">
         @csrf
-        <button type="submit">Logout</button>
+        <button class="btn btn-outline" type="submit">Logout</button>
     </form>
 </header>
 
 <main>
     <h1>Dashboard Admin</h1>
+    <p>Selamat datang, {{ Auth::user()->name }}.</p>
+    <p>Kelola data peserta dan sertifikasi melalui menu berikut.</p>
 
-    <p class="subtitle">
-        Selamat datang, {{ auth()->user()->name }}.
-    </p>
-
-    <div class="stats">
-        <div class="card">
-            <p>Total Peserta</p>
-            <div class="number">{{ $totalPeserta }}</div>
-        </div>
-
-        <div class="card">
-            <p>Total Skema</p>
-            <div class="number">{{ $totalSkema }}</div>
-        </div>
-
-        <div class="card">
-            <p>Peserta Lulus</p>
-            <div class="number">{{ $pesertaLulus }}</div>
-        </div>
-
-        <div class="card">
-            <p>Peserta Dalam Proses</p>
-            <div class="number">{{ $pesertaProses }}</div>
-        </div>
-    </div>
-
-    <h2>Menu Admin</h2>
-
-    <div class="menus">
-        <div class="card">
+    <section class="menu">
+        <div class="menu-card">
             <h3>Data Peserta</h3>
-            <p>Tambah, edit, lihat, dan hapus data peserta sertifikasi.</p>
-
-            <a href="{{ route('peserta.index') }}" class="btn">
-                Kelola Peserta
-            </a>
+            <p>Total peserta: {{ $totalPeserta }}</p>
+            <a href="{{ route('peserta.index') }}" class="btn">Kelola Peserta</a>
         </div>
 
-        <div class="card">
+        <div class="menu-card">
             <h3>Skema Sertifikasi</h3>
-            <p>Kelola informasi skema sertifikasi yang tersedia.</p>
-
-            <a href="{{ route('skema.index') }}" class="btn">
-                Kelola Skema
-            </a>
+            <p>Total skema: {{ $totalSkema }}</p>
+            <a href="{{ route('skema.index') }}" class="btn">Kelola Skema</a>
         </div>
-    </div>
-</main>
 
+        <div class="menu-card">
+            <h3>Validasi Dokumen</h3>
+            <p>Periksa dokumen yang diunggah peserta.</p>
+            <a href="{{ route('admin.validasi.index') }}" class="btn">Periksa Dokumen</a>
+        </div>
+
+        <div class="menu-card">
+            <h3>Ringkasan Sertifikasi</h3>
+            <p>Peserta lulus: {{ $pesertaLulus }}</p>
+            <p>Peserta dalam proses/terdaftar: {{ $pesertaProses }}</p>
+        </div>
+    </section>
+</main>
 </body>
 </html>

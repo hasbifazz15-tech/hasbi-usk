@@ -10,9 +10,22 @@ use Illuminate\Support\Facades\Hash;
 class AuthController extends Controller
 {
     // Halaman Login
-    public function showLogin()
+    public function showLogin(Request $request)
     {
-        return view('auth.login');
+        // Akhiri sesi lama agar form login muncul
+        if (Auth::check()) {
+            Auth::logout();
+
+            $request->session()->invalidate();
+            $request->session()->regenerateToken();
+        }
+
+        return response()
+            ->view('auth.login')
+            ->header(
+                'Cache-Control',
+                'no-store, no-cache, must-revalidate, max-age=0'
+            );
     }
 
     // Proses Login
@@ -44,6 +57,7 @@ class AuthController extends Controller
         }
 
         Auth::logout();
+
         $request->session()->invalidate();
         $request->session()->regenerateToken();
 
@@ -68,22 +82,20 @@ class AuthController extends Controller
             'password' => ['required', 'string', 'min:8', 'confirmed'],
         ]);
 
-        // Semua akun yang mendaftar otomatis menjadi user
-        $user = new User();
-        $user->name = $data['name'];
-        $user->email = $data['email'];
-        $user->password = Hash::make($data['password']);
-        $user->role = 'user';
-        $user->save();
+        $user = User::create([
+            'name' => $data['name'],
+            'email' => $data['email'],
+            'password' => Hash::make($data['password']),
+            'role' => 'user',
+        ]);
 
         Auth::login($user);
-
         $request->session()->regenerate();
 
         return redirect()->route('user.dashboard');
     }
 
-    // Proses Logout
+    // Logout
     public function logout(Request $request)
     {
         Auth::logout();

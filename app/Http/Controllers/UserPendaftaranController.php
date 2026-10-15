@@ -13,10 +13,9 @@ class UserPendaftaranController extends Controller
     {
         $skemas = Skema::all();
 
-        $skemaTerdaftar = Peserta::where(
-            'email', 
-            Auth::user()->email
-        )->pluck('skema_id')->toArray();
+        $skemaTerdaftar = Peserta::where('email', Auth::user()->email)
+            ->pluck('skema_id')
+            ->toArray();
 
         return view('user.skema.index', compact(
             'skemas',
@@ -26,8 +25,8 @@ class UserPendaftaranController extends Controller
 
     public function create(Skema $skema)
     {
+        // Satu akun hanya boleh mendaftar satu skema
         $sudahDaftar = Peserta::where('email', Auth::user()->email)
-            ->where('skema_id', $skema->id)
             ->exists();
 
         return view('user.skema.daftar', compact(
@@ -43,17 +42,27 @@ class UserPendaftaranController extends Controller
             'nik' => 'required|digits:16',
             'no_hp' => ['required', 'regex:/^[0-9]{10,15}$/'],
             'alamat' => 'required|string|max:1000',
+        ], [
+            'skema_id.required' => 'Skema wajib dipilih.',
+            'skema_id.exists' => 'Skema tidak ditemukan.',
+            'nik.required' => 'NIK wajib diisi.',
+            'nik.digits' => 'NIK harus terdiri dari 16 digit.',
+            'no_hp.required' => 'Nomor HP wajib diisi.',
+            'no_hp.regex' => 'Nomor HP harus terdiri dari 10 sampai 15 digit.',
+            'alamat.required' => 'Alamat wajib diisi.',
         ]);
 
         $user = Auth::user();
 
-        $sudahDaftar = Peserta::where('email', $user->email)
-            ->where('skema_id', $data['skema_id'])
-            ->exists();
+        // Cek apakah akun sudah pernah mendaftar
+        $sudahDaftar = Peserta::where('email', $user->email)->exists();
 
-        if ($sudahDaftar) {
-            return back()->with('error', 'Kamu sudah mendaftar skema ini.');
-        }
+      if ($sudahDaftar) {
+    return back()->with(
+        'error',
+        'Akun kamu sudah digunakan untuk pendaftaran sertifikasi. Kamu tidak bisa mendaftar lagi.'
+    );
+}
 
         $peserta = new Peserta();
         $peserta->nik = $data['nik'];
@@ -66,7 +75,8 @@ class UserPendaftaranController extends Controller
         $peserta->status = 'Terdaftar';
         $peserta->save();
 
-        return redirect()->route('user.pendaftaran')
+        return redirect()
+            ->route('user.pendaftaran')
             ->with('success', 'Pendaftaran sertifikasi berhasil dikirim.');
     }
 

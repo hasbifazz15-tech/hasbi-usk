@@ -34,41 +34,12 @@
             margin: 0;
         }
 
-        .btn {
-            display: inline-block;
-            padding: 10px 16px;
-            border-radius: 7px;
-            text-decoration: none;
-            border: none;
-            cursor: pointer;
-            font-size: 14px;
-        }
-
-        .btn-primary {
-            background: #111827;
-            color: white;
-        }
-
-        .btn-edit {
-            background: #2563eb;
-            color: white;
-        }
-
-        .btn-delete {
-            background: #dc2626;
-            color: white;
-        }
-
-        .btn-detail {
-            background: #6b7280;
-            color: white;
-        }
-
         .card {
             background: white;
             border-radius: 10px;
             padding: 20px;
-            box-shadow: 0 4px 15px rgba(0,0,0,.05);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, .05);
+            overflow-x: auto;
         }
 
         table {
@@ -86,9 +57,23 @@
             background: #f9fafb;
         }
 
-        .actions {
-            display: flex;
-            gap: 6px;
+        .btn {
+            display: inline-block;
+            padding: 9px 14px;
+            border-radius: 7px;
+            text-decoration: none;
+            border: none;
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        .btn-detail {
+            background: #6b7280;
+            color: white;
+        }
+
+        .btn-detail:hover {
+            background: #4b5563;
         }
 
         .alert {
@@ -113,26 +98,43 @@
             color: #374151;
             text-decoration: none;
         }
+
+        .back:hover {
+            color: #111827;
+        }
+
+        .empty {
+            text-align: center;
+            color: #6b7280;
+            padding: 25px;
+        }
+
+        @media (max-width: 600px) {
+            .container {
+                width: 95%;
+                margin: 20px auto;
+            }
+
+            th, td {
+                padding: 10px;
+                font-size: 13px;
+            }
+        }
     </style>
 </head>
 
 <body>
-
 <div class="container">
 
     <a href="{{ route('dashboard') }}" class="back">
-        ← Dashboard
+        &larr; Dashboard
     </a>
 
     <div class="header">
         <div>
             <h1>Skema Sertifikasi</h1>
-            <p>Kelola data skema sertifikasi.</p>
+            <p>Daftar skema sertifikasi yang tersedia.</p>
         </div>
-
-        <a href="{{ route('skema.create') }}" class="btn btn-primary">
-            + Tambah Skema
-        </a>
     </div>
 
     @if(session('success'))
@@ -148,9 +150,7 @@
     @endif
 
     <div class="card">
-
         @if($skemas->count())
-
             <table>
                 <thead>
                     <tr>
@@ -169,48 +169,21 @@
                             <td>{{ $skema->kode }}</td>
                             <td>{{ $skema->nama }}</td>
                             <td>{{ $skema->lembaga ?? '-' }}</td>
-
                             <td>
-                                <div class="actions">
-
-                                    <a href="{{ route('skema.show', $skema) }}"
-                                       class="btn btn-detail">
-                                        Detail
-                                    </a>
-
-                                    <a href="{{ route('skema.edit', $skema) }}"
-                                       class="btn btn-edit">
-                                        Edit
-                                    </a>
-
-                                    <form action="{{ route('skema.destroy', $skema) }}"
-                                          method="POST"
-                                          onsubmit="return confirm('Yakin ingin menghapus skema ini?')">
-
-                                        @csrf
-                                        @method('DELETE')
-
-                                        <button class="btn btn-delete">
-                                            Hapus
-                                        </button>
-                                    </form>
-
-                                </div>
+                                <a href="{{ route('skema.show', $skema) }}"
+                                   class="btn btn-detail">
+                                    Detail
+                                </a>
                             </td>
                         </tr>
                     @endforeach
                 </tbody>
             </table>
-
         @else
-
-            <p>Belum ada data skema sertifikasi.</p>
-
+            <p class="empty">Belum ada data skema sertifikasi.</p>
         @endif
-
     </div>
 
 </div>
-
 </body>
 </html>

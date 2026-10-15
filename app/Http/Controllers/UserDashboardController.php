@@ -4,9 +4,12 @@ namespace App\Http\Controllers;
 
 use App\Models\Peserta;
 use App\Models\Skema;
+use App\Models\DokumenPeserta;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
 
 class UserDashboardController extends Controller
@@ -43,17 +46,20 @@ class UserDashboardController extends Controller
         ));
     }
 
-    // Halaman profil
+    // Profil dan status dokumen
     public function profile()
     {
         $user = Auth::user();
 
-        $peserta = Peserta::where('email', $user->email)->first();
+        $peserta = Peserta::with('dokumenPesertas')
+            ->where('email', $user->email)
+            ->latest('id')
+            ->first();
 
         return view('user.profil', compact('user', 'peserta'));
     }
 
-    // Simpan perubahan profil dan NIK
+    // Simpan profil sekaligus upload dokumen
     public function updateProfile(Request $request)
     {
         $user = Auth::user();
@@ -68,17 +74,29 @@ class UserDashboardController extends Controller
             ],
             'nik' => ['required', 'digits:16'],
             'no_hp' => ['nullable', 'string', 'max:20'],
+
+            'ktp' => ['nullable', 'file', 'mimes:pdf,jpg,jpeg,png', 'max:2048'],
+            'ijazah' => ['nullable', 'file', 'mimes:pdf,jpg,jpeg,png', 'max:2048'],
+            'sertifikat' => ['nullable', 'file', 'mimes:pdf,jpg,jpeg,png', 'max:2048'],
         ], [
+            'name.required' => 'Nama wajib diisi.',
+            'email.required' => 'Email wajib diisi.',
+            'email.email' => 'Format email tidak valid.',
+            'email.unique' => 'Email sudah digunakan akun lain.',
             'nik.required' => 'NIK wajib diisi.',
             'nik.digits' => 'NIK harus terdiri dari 16 digit.',
+            '*.mimes' => 'File harus berupa PDF, JPG, JPEG, atau PNG.',
+            '*.max' => 'Ukuran setiap dokumen maksimal 2 MB.',
         ]);
 
         $peserta = Peserta::where('email', $user->email)->first();
 
         if (!$peserta) {
-            return back()->withErrors([
-                'nik' => 'Data peserta belum ditemukan. Silakan daftar skema terlebih dahulu.',
-            ])->withInput();
+            return back()
+                ->withErrors([
+                    'nik' => 'Data peserta belum ditemukan. Daftar skema terlebih dahulu.',
+                ])
+                ->withInput();
         }
 
         $duplikat = Peserta::where('nik', $data['nik'])
@@ -86,41 +104,117 @@ class UserDashboardController extends Controller
             ->exists();
 
         if ($duplikat) {
-            return back()->withErrors([
-                'nik' => 'NIK sudah digunakan peserta lain.',
-            ])->withInput();
+            return back()
+                ->withErrors([
+                    'nik' => 'NIK sudah digunakan peserta lain.',
+                ])
+                ->withInput();
         }
 
-        $emailLama = $user->email;
+        $jenisDokumen = [
+            'ktp' => 'ktp',
+            'ijazah' => 'ijazah',
+            'sertifikat' => 'sertifikat',
+        ];
 
-        $user->name = $data['name'];
-        $user->email = $data['email'];
-        
+        $fileBaru = [];
 
-        $peserta->nama = $data['name'];
-        $peserta->email = $data['email'];
-        $peserta->nik = $data['nik'];
-        $peserta->no_hp = $data['no_hp'] ?? '';
-        $peserta->save();
+        try {
+            DB::transaction(function () use (
+                $user,
+                $peserta,
+                $data,
+                $request,
+                $jenisDokumen,
+                &$fileBaru
+            ) {
+                $user->name = $data['name'];
+                $user->email = $data['email'];
+                $user->save();
 
-        Peserta::where('email', $emailLama)
-            ->where('id', '!=', $peserta->id)
-            ->update(['email' => $data['email']]);
+                $peserta->nama = $data['name'];
+                $peserta->email = $data['email'];
+                $peserta->nik = $data['nik'];
+                $peserta->no_hp = $data['no_hp'] ?? '';
+                $peserta->save();
 
-        return back()->with(
-            'profile_success',
-            'Profil dan NIK berhasil diperbarui.'
-        );
+                foreach ($jenisDokumen as $field => $jenis) {
+                    if (!$request->hasFile($field)) {
+                        continue;
+                    }
+
+                    $dokumenLama = DokumenPeserta::where(
+                        'peserta_id',
+                        $peserta->id
+                    )
+                        ->where('jenis_dokumen', $jenis)
+                        ->where('status', 'menunggu')
+                        ->first();
+
+                    $path = $request->file($field)
+                        ->store('dokumen-peserta', 'local');
+
+                    $fileBaru[] = $path;
+
+                    if ($dokumenLama) {
+                        Storage::disk('local')->delete(
+                            $dokumenLama->file_path
+                        );
+
+                        $dokumenLama->delete();
+                    }
+
+                    DokumenPeserta::create([
+                        'peserta_id' => $peserta->id,
+                        'jenis_dokumen' => $jenis,
+                        'file_path' => $path,
+                        'status' => 'menunggu',
+                        'catatan_admin' => null,
+                    ]);
+                }
+
+                if (count($fileBaru) > 0) {
+                    $peserta->status_verifikasi = 'Belum Terverifikasi';
+                    $peserta->save();
+                }
+            });
+        } catch (\Throwable $e) {
+            foreach ($fileBaru as $path) {
+                Storage::disk('local')->delete($path);
+            }
+
+            throw $e;
+        }
+
+        return redirect()
+            ->route('user.profil')
+            ->with(
+                'profile_success',
+                count($fileBaru) > 0
+                    ? 'Profil dan dokumen berhasil disimpan. Dokumen menunggu verifikasi admin.'
+                    : 'Profil berhasil diperbarui.'
+            );
     }
 
     // Ganti password
     public function updatePassword(Request $request)
     {
         $data = $request->validate([
-            'current_password' => ['required', 'current_password'],
-            'password' => ['required', 'string', 'min:8', 'confirmed'],
+            'current_password' => [
+                'required',
+                'current_password',
+            ],
+            'password' => [
+                'required',
+                'string',
+                'min:8',
+                'confirmed',
+            ],
         ], [
+            'current_password.required' => 'Password lama wajib diisi.',
             'current_password.current_password' => 'Password lama tidak sesuai.',
+            'password.required' => 'Password baru wajib diisi.',
+            'password.min' => 'Password baru minimal 8 karakter.',
             'password.confirmed' => 'Konfirmasi password tidak cocok.',
         ]);
 
@@ -128,9 +222,8 @@ class UserDashboardController extends Controller
         $user->password = Hash::make($data['password']);
         $user->save();
 
-        return back()->with(
-            'password_success',
-            'Password berhasil diganti.'
-        );
+        return redirect()
+            ->route('user.profil')
+            ->with('password_success', 'Password berhasil diganti.');
     }
 }

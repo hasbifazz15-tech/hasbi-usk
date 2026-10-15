@@ -9,6 +9,7 @@ use Illuminate\Validation\Rule;
 
 class PesertaController extends Controller
 {
+    // Daftar peserta
     public function index(Request $request)
     {
         $search = $request->search;
@@ -28,6 +29,7 @@ class PesertaController extends Controller
         return view('peserta.index', compact('pesertas', 'search'));
     }
 
+    // Form tambah peserta
     public function create()
     {
         $skemas = Skema::orderBy('nama')->get();
@@ -35,22 +37,43 @@ class PesertaController extends Controller
         return view('peserta.create', compact('skemas'));
     }
 
+    // Simpan peserta
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'nik' => ['required', 'digits:16', 'unique:pesertas,nik'],
-            'nama' => ['required', 'string', 'max:255'],
-            'email' => ['required', 'email', 'max:255', 'unique:pesertas,email'],
-            'no_hp' => ['required', 'regex:/^[0-9]{5,20}$/'],
+            'nik' => [
+                'required',
+                'digits:16',
+                'unique:pesertas,nik',
+            ],
+            'nama' => [
+                'required',
+                'string',
+                'max:255',
+                'regex:/^[\pL\s]+$/u',
+            ],
+            'email' => [
+                'required',
+                'email',
+                'max:255',
+                'unique:pesertas,email',
+            ],
+            'no_hp' => [
+                'required',
+                'regex:/^[0-9]{5,20}$/',
+            ],
             'alamat' => ['required', 'string'],
             'skema_id' => ['required', 'exists:skemas,id'],
             'tanggal_daftar' => ['required', 'date'],
-            'status' => ['required', Rule::in([
-                'Terdaftar',
-                'Proses',
-                'Lulus',
-                'Tidak Lulus'
-            ])],
+            'status' => [
+                'required',
+                Rule::in([
+                    'Terdaftar',
+                    'Proses',
+                    'Lulus',
+                    'Tidak Lulus',
+                ]),
+            ],
         ]);
 
         Peserta::create($validated);
@@ -60,14 +83,15 @@ class PesertaController extends Controller
             ->with('success', 'Data peserta berhasil ditambahkan.');
     }
 
+    // Detail peserta
     public function show(Peserta $peserta)
     {
         $peserta->load('skema');
-        $skemas = Skema::orderBy('nama')->get();
 
         return view('peserta.show', compact('peserta'));
     }
 
+    // Form edit peserta
     public function edit(Peserta $peserta)
     {
         $skemas = Skema::orderBy('nama')->get();
@@ -75,41 +99,77 @@ class PesertaController extends Controller
         return view('peserta.edit', compact('peserta', 'skemas'));
     }
 
-    public function update(Request $request, $id)
-{
-    $peserta = Peserta::findOrFail($id);
+    // Simpan perubahan peserta
+    public function update(Request $request, Peserta $peserta)
+    {
+        $validated = $request->validate([
+            'nik' => [
+                'required',
+                'digits:16',
+                Rule::unique('pesertas', 'nik')->ignore($peserta->id),
+            ],
+            'nama' => [
+                'required',
+                'string',
+                'max:255',
+                'regex:/^[\pL\s]+$/u',
+            ],
+            'email' => [
+                'required',
+                'email',
+                'max:255',
+                Rule::unique('pesertas', 'email')->ignore($peserta->id),
+            ],
+            'no_hp' => [
+                'required',
+                'regex:/^[0-9]{5,20}$/',
+            ],
+            'alamat' => ['required', 'string'],
+            'skema_id' => ['required', 'exists:skemas,id'],
+            'tanggal_daftar' => ['required', 'date'],
+            'status' => [
+                'required',
+                Rule::in([
+                    'Terdaftar',
+                    'Proses',
+                    'Lulus',
+                    'Tidak Lulus',
+                ]),
+            ],
+        ]);
 
-    $validated = $request->validate([
-        'nik' => [
-            'required',
-            'digits:16',
-            Rule::unique('pesertas', 'nik')->ignore($peserta->id),
-        ],
-        'nama' => ['required', 'string', 'max:255', 'regex:/^[\pL\s]+$/u'],
-        'email' => [
-            'required',
-            'email',
-            'max:255',
-            Rule::unique('pesertas', 'email')->ignore($peserta->id),
-        ],
-        'no_hp' => ['required', 'regex:/^[0-9]{5,20}$/'],
-        'alamat' => ['required', 'string'],
-        'skema_id' => ['required', 'exists:skemas,id'],
-        'tanggal_daftar' => ['required', 'date'],
-        'status' => ['required', Rule::in([
-            'Terdaftar',
-            'Proses',
-            'Lulus',
-            'Tidak Lulus'
-        ])],
-    ]);
+        $peserta->update($validated);
 
-    $peserta->update($validated);
+        return redirect()
+            ->route('peserta.index')
+            ->with('success', 'Data peserta berhasil diperbarui.');
+    }
 
-    return redirect()
-        ->route('peserta.index')
-        ->with('success', 'Data peserta berhasil diperbarui.');
-}
+    // Ubah status langsung dari tabel
+    public function updateStatus(Request $request, Peserta $peserta)
+    {
+        $validated = $request->validate([
+            'status' => [
+                'required',
+                Rule::in([
+                    'Terdaftar',
+                    'Proses',
+                    'Lulus',
+                    'Tidak Lulus',
+                ]),
+            ],
+        ]);
+
+        $peserta->update([
+            'status' => $validated['status'],
+        ]);
+
+        return redirect()
+            ->route('peserta.index', $request->only('search', 'page'))
+            ->with('success', 'Status peserta berhasil diperbarui.');
+    }
+
+    // Hapus peserta
     public function destroy(Peserta $peserta)
     {
         $peserta->delete();

@@ -10,244 +10,188 @@
 
         body {
             margin: 0;
+            padding: 30px;
             font-family: Arial, sans-serif;
             background: #f5f6f8;
-            color: #111827;
+            color: #222;
         }
 
         .container {
-            width: 94%;
-            max-width: 1250px;
-            margin: 40px auto;
-        }
-
-        .header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            gap: 15px;
-            margin-bottom: 25px;
-        }
-
-        h1 { margin: 0; }
-
-        .muted {
-            color: #6b7280;
+            max-width: 1200px;
+            margin: auto;
         }
 
         .card {
             background: white;
+            padding: 24px;
+            border: 1px solid #ddd;
             border-radius: 10px;
-            padding: 20px;
-            box-shadow: 0 4px 15px rgba(0,0,0,.05);
         }
 
-        .search {
-            display: flex;
-            gap: 10px;
-            margin-bottom: 20px;
+        h1 { margin-top: 0; }
+
+        .subtitle {
+            color: #666;
+            margin-bottom: 25px;
         }
 
-        .search input {
-            flex: 1;
-            padding: 11px;
-            border: 1px solid #d1d5db;
-            border-radius: 7px;
-        }
-
-        .btn {
-            display: inline-block;
-            padding: 10px 14px;
-            border: 0;
-            border-radius: 7px;
-            text-decoration: none;
-            cursor: pointer;
-            font-size: 14px;
-        }
-
-        .primary {
-            background: #111827;
-            color: white;
-        }
-
-        .detail {
-            background: #6b7280;
-            color: white;
-        }
-
-        .edit {
-            background: #2563eb;
-            color: white;
-        }
-
-        .delete {
-            background: #dc2626;
-            color: white;
-        }
+        .table-wrapper { overflow-x: auto; }
 
         table {
             width: 100%;
             border-collapse: collapse;
+            margin-top: 20px;
         }
 
         th, td {
             padding: 13px;
             border-bottom: 1px solid #eee;
             text-align: left;
+            white-space: nowrap;
         }
 
-        th {
-            background: #f9fafb;
+        th { background: #f8f8f8; }
+
+        .badge {
+            display: inline-block;
+            padding: 6px 10px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: bold;
         }
 
-        .actions {
-            display: flex;
-            gap: 5px;
-        }
-
-        .alert {
-            padding: 12px 15px;
-            border-radius: 7px;
-            margin-bottom: 20px;
-        }
-
-        .success {
+        .verified {
             background: #dcfce7;
             color: #166534;
         }
 
-        .pagination {
-            margin-top: 20px;
+        .unverified {
+            background: #fef3c7;
+            color: #92400e;
+        }
+
+        .btn {
+            display: inline-block;
+            padding: 8px 12px;
+            background: #111;
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+            font-size: 13px;
         }
 
         .back {
             display: inline-block;
             margin-bottom: 20px;
-            color: #374151;
+            color: #222;
             text-decoration: none;
+        }
+
+        .empty {
+            padding: 25px;
+            text-align: center;
+            color: #777;
+        }
+
+        @media (max-width: 600px) {
+            body { padding: 15px; }
+            .card { padding: 15px; }
         }
     </style>
 </head>
 
 <body>
-
 <div class="container">
 
     <a href="{{ route('dashboard') }}" class="back">
-        ← Dashboard
+        &larr; Kembali ke Dashboard
     </a>
 
-    <div class="header">
-        <div>
-            <h1>Data Peserta</h1>
-            <p class="muted">Kelola peserta sertifikasi.</p>
-        </div>
-
-        <a href="{{ route('peserta.create') }}" class="btn primary">
-            + Tambah Peserta
-        </a>
-    </div>
-
-    @if(session('success'))
-        <div class="alert success">
-            {{ session('success') }}
-        </div>
-    @endif
-
     <div class="card">
+        <h1>Data Peserta</h1>
 
-        <form method="GET" action="{{ route('peserta.index') }}" class="search">
-            <input
-                type="text"
-                name="search"
-                value="{{ $search }}"
-                placeholder="Cari NIK, nama, atau email..."
-            >
+        <p class="subtitle">
+            Daftar peserta sertifikasi dan status verifikasi dokumennya.
+        </p>
 
-            <button class="btn primary" type="submit">
-                Cari
-            </button>
-
-            @if($search)
-                <a href="{{ route('peserta.index') }}" class="btn detail">
-                    Reset
-                </a>
-            @endif
-        </form>
-
-        <table>
-            <thead>
-                <tr>
-                    <th>No</th>
-                    <th>NIK</th>
-                    <th>Nama</th>
-                    <th>Email</th>
-                    <th>Skema</th>
-                    <th>Status</th>
-                    <th>Aksi</th>
-                </tr>
-            </thead>
-
-            <tbody>
-                @forelse($pesertas as $peserta)
+        <div class="table-wrapper">
+            <table>
+                <thead>
                     <tr>
-                        <td>{{ $pesertas->firstItem() + $loop->index }}</td>
-                        <td>{{ $peserta->nik }}</td>
-                        <td>{{ $peserta->nama }}</td>
-                        <td>{{ $peserta->email }}</td>
-                        <td>{{ $peserta->skema->nama }}</td>
-                        <td>{{ $peserta->status }}</td>
+                        <th>No.</th>
+                        <th>Nama Peserta</th>
+                        <th>Email</th>
+                        <th>Skema</th>
+                        <th>Status Peserta</th>
+                        <th>Status Verifikasi</th>
+                        <th>Aksi</th>
+                    </tr>
+                </thead>
 
-                        <td>
-                            <div class="actions">
+                <tbody>
+                    @forelse ($pesertas as $peserta)
+                        <tr>
+                            <td>{{ $pesertas->firstItem() + $loop->index }}</td>
 
-                                <a
-                                    href="{{ route('peserta.show', $peserta) }}"
-                                    class="btn detail"
-                                >
+                            <td>{{ $peserta->nama }}</td>
+
+                            <td>{{ $peserta->email }}</td>
+
+                            <td>
+                                {{ $peserta->skema->nama_skema ?? '-' }}
+                            </td>
+
+                            <td>
+                                {{ $peserta->status ?? '-' }}
+                            </td>
+
+                            <td>
+                                @php
+                                    $dokumen = $peserta->dokumenPesertas ?? collect();
+
+                                    $semuaTerverifikasi = $dokumen->isNotEmpty()
+                                        && $dokumen->every(fn ($item) => $item->status === 'Terverifikasi');
+                                @endphp
+
+                                @if ($dokumen->isEmpty())
+                                    <span class="badge unverified">
+                                        Belum Upload
+                                    </span>
+                                @elseif ($semuaTerverifikasi)
+                                    <span class="badge verified">
+                                        Terverifikasi
+                                    </span>
+                                @else
+                                    <span class="badge unverified">
+                                        Belum Lengkap / Diproses
+                                    </span>
+                                @endif
+                            </td>
+
+                            <td>
+                                <a href="{{ route('peserta.show', $peserta->id) }}"
+                                   class="btn">
                                     Detail
                                 </a>
-
-                                <a
-                                    href="{{ route('peserta.edit', $peserta) }}"
-                                    class="btn edit"
-                                >
-                                    Edit
-                                </a>
-
-                                <form
-                                    action="{{ route('peserta.destroy', $peserta) }}"
-                                    method="POST"
-                                    onsubmit="return confirm('Yakin ingin menghapus peserta ini?')"
-                                >
-                                    @csrf
-                                    @method('DELETE')
-
-                                    <button class="btn delete">
-                                        Hapus
-                                    </button>
-                                </form>
-
-                            </div>
-                        </td>
-                    </tr>
-                @empty
-                    <tr>
-                        <td colspan="7">
-                            Belum ada data peserta.
-                        </td>
-                    </tr>
-                @endforelse
-            </tbody>
-        </table>
-
-        <div class="pagination">
-            {{ $pesertas->links() }}
+                            </td>
+                        </tr>
+                    @empty
+                        <tr>
+                            <td colspan="7" class="empty">
+                                Belum ada data peserta.
+                            </td>
+                        </tr>
+                    @endforelse
+                </tbody>
+            </table>
         </div>
 
+        @if (method_exists($pesertas, 'links'))
+            <div style="margin-top: 20px;">
+                {{ $pesertas->links() }}
+            </div>
+        @endif
     </div>
-
 </div>
-
 </body>
 </html>

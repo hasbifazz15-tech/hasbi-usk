@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="id">
 <head>
@@ -107,6 +106,11 @@
             background: #fee2e2;
         }
 
+        .alert-success {
+            color: #166534;
+            background: #dcfce7;
+        }
+
         .btn {
             display: inline-block;
             padding: 12px 17px;
@@ -164,27 +168,46 @@
             Deskripsi: {{ $skema->deskripsi ?? '-' }}
         </div>
 
+        {{-- Pesan error dan sukses --}}
         @if (session('error'))
             <div class="alert alert-error">
                 {{ session('error') }}
             </div>
         @endif
 
+        @if (session('success'))
+            <div class="alert alert-success">
+                {{ session('success') }}
+            </div>
+        @endif
+
+        {{-- Validasi umum --}}
+        @if ($errors->any())
+            <div class="alert alert-error">
+                <strong>Periksa kembali data kamu:</strong>
+                <ul style="margin-bottom: 0; padding-left: 20px;">
+                    @foreach ($errors->all() as $error)
+                        <li>{{ $error }}</li>
+                    @endforeach
+                </ul>
+            </div>
+        @endif
+
         @if ($sudahDaftar)
             <div class="alert alert-error">
                 Kamu sudah terdaftar pada skema ini.
+                Silakan pilih skema sertifikasi lain.
             </div>
 
             <a href="{{ route('user.pendaftaran') }}" class="btn">
                 Lihat Pendaftaran Saya
             </a>
-        @else
 
-            @if ($errors->any())
-                <div class="alert alert-error">
-                    Periksa kembali data yang kamu masukkan.
-                </div>
-            @endif
+            <a href="{{ route('user.skema.index') }}"
+               class="btn btn-secondary">
+                Pilih Skema Lain
+            </a>
+        @else
 
             <form action="{{ route('user.pendaftaran.store') }}" method="POST">
                 @csrf
